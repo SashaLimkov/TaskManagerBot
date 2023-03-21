@@ -2,8 +2,10 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from bot.data import text_data as td
-from bot.handlers.main.faq import get_faq
+from bot.handlers.main.task_creation import create_task_menu
+from bot.handlers.main.task_moderation import created_tasks_list_menu
 from bot.keyboards import inline as ik
+from bot.states.MainMenu import MainMenu
 from bot.utils.message_worker import dry_message_editor
 
 
@@ -17,13 +19,10 @@ async def get_task_menu(call: types.CallbackQuery, state: FSMContext, callback_d
 
 
 async def tasks_menu_segregation(call: types.CallbackQuery, state: FSMContext, callback_data: dict):
+    await MainMenu.MM.set()
     if callback_data["action_2"] == "1":
-        pass
+        await create_task_menu(message=call.message, state=state, callback_data=callback_data)
     elif callback_data["action_2"] == "2":
-        pass
+        await created_tasks_list_menu(call=call, state=state, callback_data=callback_data)
     else:
         pass
-
-
-async def create_task_menu(call: types.CallbackQuery, state: FSMContext, callback_data: dict):
-    pass

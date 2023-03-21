@@ -6,8 +6,8 @@ from . import registration_module, main, commands
 
 def setup(dp: Dispatcher):
     registration_module.setup(dp)
-    main.setup(dp)
     dp.register_message_handler(commands.start_command, filters.CommandStart(), state="*")
+    main.setup(dp)
     dp.register_callback_query_handler(commands.main_menu, filters.Text(cd.MAIN_MENU), state="*")
     # main_module.setup(dp)
     # dp.register_message_handler(commands.start_command, filters.CommandStart(), state="*")

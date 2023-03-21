@@ -74,6 +74,53 @@ async def try_send_message(message, user_id, text, keyboard, state: FSMContext):
         print(traceback.format_exc())
 
 
+async def try_send_doc(message, user_id, text, keyboard, state: FSMContext, file=None):
+    """Функция, которая пытается отправить любое текстовое сообщение.
+    С учетом main_message_id для дальнейшего его обновления.
+    Удаляет предыдущее главное сообщение.
+    :param message:
+    :param user_id:
+    :param text:
+    :param keyboard:
+    :param state:
+    :return:
+    """
+    data = await state.get_data()
+    main_message_id = data.get("main_message_id", False)
+    doc_uid = data.get("file_uid", False)
+    await try_delete_message(user_id, main_message_id)
+    if file:
+        try:
+            with open(file, "rb") as f:
+                print(f, doc_uid)
+                mes = await bot.send_document(
+                    document=f or doc_uid, chat_id=user_id, caption=text, reply_markup=keyboard if keyboard else None
+                )
+                await state.update_data({"main_message_id": mes.message_id})
+                return mes.message_id
+        except Exception:
+            try:
+                print(123)
+                with open(file, "r") as f:
+                    mes = await bot.send_document(
+                        document=f or doc_uid, chat_id=user_id, caption=text,
+                        reply_markup=keyboard if keyboard else None
+                    )
+                    await state.update_data({"main_message_id": mes.message_id})
+                    return mes.message_id
+            except:
+                print(traceback.format_exc())
+    else:
+        try:
+            mes = await bot.send_document(
+                document=doc_uid, chat_id=user_id, caption=text, reply_markup=keyboard if keyboard else None
+            )
+            await state.update_data({"main_message_id": mes.message_id})
+            return mes.message_id
+        except:
+            print(traceback.format_exc())
+
+
 async def try_edit_keyboard(
         chat_id: int,
         message_id: int,
@@ -116,3 +163,22 @@ async def dry_message_editor(text, keyboard, state, message):
         keyboard=keyboard,
         state=state
     )
+
+
+async def try_edit_document_caption(message, user_id, text, main_message_id, keyboard, state: FSMContext, file=0):
+    try:
+        await bot.edit_message_caption(
+            chat_id=user_id,
+            message_id=main_message_id,
+            caption=text,
+            reply_markup=keyboard
+        )
+    except Exception:
+        await try_send_doc(
+            message=message,
+            user_id=user_id,
+            text=text,
+            state=state,
+            keyboard=keyboard,
+            file=file
+        )
