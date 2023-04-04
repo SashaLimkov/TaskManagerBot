@@ -13,6 +13,8 @@ class TelegramUser(TimeBasedModel):
     username = models.CharField("Никнейм пользователя", max_length=255)
     telegram_id = models.BigIntegerField("Телеграм ID", unique=True)
     phone_number = models.CharField("Контактный номер", max_length=30, blank=True)
+    done_tasks_count = models.IntegerField(default=0)
+    lost_deadline_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.fio

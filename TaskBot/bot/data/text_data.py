@@ -19,6 +19,21 @@ TASK_MODERATION_MENU = "Номер задачи: {task_pk}\n\n" \
                        "Постановщик: {creator_fio} {creator_username}\n" \
                        "Срок исполнения: {task_deadline}\n" \
                        "Исполнители: \n{executors}\n" \
-                       "Наблюдатели: {observers}\n" \
+                       "Наблюдатели: \n{observers}\n" \
                        "Количетсво просрочивших дедлайн: {dd_lost_count}\n" \
                        "Статус задачи: {percents}"
+
+TASK_INFO_MENU = "Номер задачи: {task_pk}\n\n" \
+                 "Описание задачи: {description}\n\n" \
+                 "Постановщик: {creator_fio} {creator_username}\n" \
+                 "Срок исполнения: {task_deadline}\n" \
+                 "Исполнители:\n{executors}\n" \
+                 "Наблюдатели:\n{observers}\n" \
+                 "Статус задачи: {percents}"
+
+REPORT = "Текст отчета: {report_text}"
+PROFILE = "ФИО: <b>{fio}</b>\n" \
+          "Юзернейм: <b>@{username}</b>\n" \
+          "Номер телефона: <b>{phone}</b>\n" \
+          "Количество выполненных задач: <b>{done_count}</b>\n" \
+          "Количество просроченных задач: <b>{lost_count}</b>\n"

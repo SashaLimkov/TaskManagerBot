@@ -5,7 +5,8 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from TaskBot.settings import BASE_DIR
-from backend.models import TelegramUser, TaskUser
+from backend import models
+from backend.models import TaskUser
 from backend.services.task import get_task_by_pk, close_task_by_pk, update_task_description_db, \
     update_task_date_time_db, update_task_doc_db
 from backend.services.task_user import create_or_delete_task_user
@@ -13,13 +14,13 @@ from backend.services.telegram_user import get_profile_by_username
 from bot.config.loader import bot
 from bot.data import text_data as td
 from bot.handlers.commands import start_command
+from bot.keyboards import inline as ik
 # from bot.handlers.main.task_creation import get_task_description_u, get_task_date_time_u, get_task_file_u
 from bot.states.MainMenu import MainMenu
 from bot.states.TaskCreation import TaskCreation
 from bot.states.TaskModeration import TaskModeration
 from bot.utils.date_time_worker import get_selected_datetime, is_past_date
-from bot.utils.message_worker import try_edit_document_caption, dry_message_editor
-from bot.keyboards import inline as ik
+from bot.utils.message_worker import try_edit_document_caption, dry_message_editor, send_notify
 from bot.utils.validators import date_time_validator
 
 
@@ -51,13 +52,13 @@ async def moderate_task_menu(message: types.Message, state: FSMContext, callback
     )
 
 
-async def get_users_text(users: List[TaskUser]) -> str:
+def get_users_text(users: List[TaskUser]) -> str:
     r = ""
-    for usert in users:
-        r += f"{usert.user.fio} @{usert.user.username}"
+    for index, usert in enumerate(users):
         if usert.role.name == "Исполнитель":
-            r += f"{'⏰❌' if not usert.is_not_deadline_lost else ''} {'выполнил' if usert.is_done else ''}\n"
+            r += f"{index + 1}. {'⏰❌ ' if not usert.is_not_deadline_lost else ''}{usert.user.fio} @{usert.user.username}{' выполнил' if usert.is_done else ''}\n"
         else:
+            r += f"{usert.user.fio} @{usert.user.username}"
             r += "\n"
     return r
 
@@ -96,7 +97,7 @@ async def close_task(call: types.CallbackQuery, state: FSMContext):
     await start_command(message=call.message, state=state)
 
 
-async def get_task_info(state: FSMContext, callback_data: dict):
+async def get_task_info(state: FSMContext = {}, callback_data: dict = {}):
     data = await state.get_data()
     task_pk = callback_data.get("task_pk") or data.get("task_pk", False)
     await state.update_data({"task_pk": task_pk})
@@ -110,8 +111,8 @@ async def get_task_info(state: FSMContext, callback_data: dict):
         creator_fio=task.creator.fio,
         task_deadline=task.datetime_deadline,
         creator_username=f"@{task.creator.username}",
-        executors=await get_users_text(executors),
-        observers=await get_users_text(observers),
+        executors=get_users_text(executors),
+        observers=get_users_text(observers),
         dd_lost_count=task.lost_deadline_count,
         percents=task.status
     )
@@ -167,7 +168,9 @@ async def get_ex_username(message: types.Message, state: FSMContext):
     user = get_profile_by_username(username=username)
     if user:
         task = get_task_by_pk(data.get("task_pk"))
-        create_or_delete_task_user(user=user, task=task, role="Исполнитель")
+        r = create_or_delete_task_user(user=user, task=task, role="Исполнитель")
+        if r:
+            await notify_users(task=task, user_id=user.telegram_id)
     await moderate_task_menu(message=message, state=state, callback_data=data.get("callback_data"))
 
 
@@ -177,7 +180,9 @@ async def get_obs_username(message: types.Message, state: FSMContext):
     user = get_profile_by_username(username=username)
     if user:
         task = get_task_by_pk(data.get("task_pk"))
-        create_or_delete_task_user(user=user, task=task, role="Наблюдатель")
+        r = create_or_delete_task_user(user=user, task=task, role="Наблюдатель")
+        if r:
+            await notify_users(task=task, user_id=user.telegram_id)
     await moderate_task_menu(message=message, state=state, callback_data=data.get("callback_data"))
 
 
@@ -289,3 +294,38 @@ async def get_task_description_u(message: types.Message, state: FSMContext):
     await state.update_data({"task_description": message.text})
     await message.delete()
     return message.text
+
+
+async def notify_users(task: models.Task, user_id: int, report_text="", report_file=""):
+    if report_text:
+        text = report_text
+    else:
+        text = "Новая задача!\n" + pretty_task_info(task=task)
+    if report_file:
+        file = report_file
+    else:
+        file = task.file.path if task.file else None
+    keyboard = await ik.back_to_mm()
+    await send_notify(
+        file=file,
+        text=text,
+        keyboard=keyboard,
+        user_id=user_id
+    )
+
+
+def pretty_task_info(task: models.Task):
+    executors = task.executors.filter(role__name="Исполнитель").all()
+    observers = task.executors.filter(role__name="Наблюдатель").all()
+    text = td.TASK_INFO_MENU.format(
+        task_pk=task.pk,
+        description=task.task,
+        creator_fio=task.creator.fio,
+        task_deadline=task.datetime_deadline,
+        creator_username=f"@{task.creator.username}",
+        executors=get_users_text(executors),
+        observers=get_users_text(observers),
+        dd_lost_count=task.lost_deadline_count,
+        percents=task.status
+    )
+    return text

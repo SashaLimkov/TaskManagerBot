@@ -27,7 +27,6 @@ async def start_registration(message: types.Message, state: FSMContext):
         )
     else:
         await try_send_message(
-            message=message,
             user_id=user_id,
             text=text,
             keyboard=await ik.get_start_registration_keyboard(),

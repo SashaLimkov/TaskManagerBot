@@ -17,6 +17,8 @@ class TaskUser(TimeBasedModel):
                              default="Исполнитель")
     is_done = models.BooleanField("Задача выполнена", default=False)
     is_not_deadline_lost = models.BooleanField("Задача не просрочена", default=True)
+    report_file = models.FileField("Файл отчета", upload_to="files", blank=True, null=True)
+    report_text = models.TextField("Текст отчета", max_length=4096, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.fio} -> {self.task.pretty_info}"

@@ -1,7 +1,9 @@
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import filters
 from bot.data import callback_data as cd
-from . import main_menu, faq, tasks_menu, task_creation, task_moderation
+from . import main_menu, faq, tasks_menu, task_creation, task_moderation, granted_tasks
+from ...states.FillReport import FillReportState
+from ...states.MainMenu import MainMenu
 from ...states.TaskCreation import TaskCreation
 from ...states.TaskModeration import TaskModeration
 
@@ -83,4 +85,46 @@ def setup(dp: Dispatcher):
     dp.register_message_handler(
         task_moderation.get_obs_username,
         state=TaskModeration.OBS_USERNAME
+    )
+    dp.register_callback_query_handler(
+        granted_tasks.granted_task_menu_call,
+        cd.granted_task_list.filter(),
+        state="*"
+    )
+    dp.register_callback_query_handler(
+        granted_tasks.report_menu_call,
+        cd.granted_task_menu.filter(),
+        state="*"
+    )
+    dp.register_callback_query_handler(
+        granted_tasks.report_menu_segregate,
+        cd.granted_task_report_menu.filter(),
+        state="*"
+    )
+    dp.register_message_handler(
+        granted_tasks.get_text,
+        state=FillReportState.TEXT
+    )
+    dp.register_message_handler(
+        granted_tasks.get_report_file,
+        state=FillReportState.FIlE,
+        content_types=types.ContentTypes.DOCUMENT,
+    )
+    dp.register_message_handler(
+        granted_tasks.get_report_file,
+        state=FillReportState.FIlE,
+    )
+    dp.register_message_handler(
+        tasks_menu.find_task,
+        state=MainMenu.FIND
+    )
+    dp.register_callback_query_handler(
+        granted_tasks.show_executors_list,
+        cd.granted_obs_menu.filter(),
+        state="*"
+    )
+    dp.register_callback_query_handler(
+        granted_tasks.show_executor_profile,
+        cd.granted_obs_executors_menu.filter(),
+        state="*"
     )
