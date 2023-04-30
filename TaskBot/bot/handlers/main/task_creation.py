@@ -1,7 +1,9 @@
+import datetime
 import os
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from aiogram.utils.markdown import hcode
 
 from TaskBot.settings import BASE_DIR
 from backend.services.task import create_task
@@ -79,8 +81,17 @@ async def task_create_segregation(call: types.CallbackQuery, state: FSMContext, 
         )
     elif callback_data["action_3"] == "3":
         await TaskCreation.DATE_TIME.set()
+        now = datetime.datetime.now()
+        minutes = str(now.time().minute)
+        now_str = f" {now.time().hour}:{minutes if len(minutes)>1 else '0'+minutes}"
+        today=datetime.date.today()
+        day = str(today.day)
+        day_str = f"{day if len(day)>1 else '0'+day}"
+        month = str(today.month)
+        month_str = f"{month if len(month)>1 else '0'+month}"
+        today_str = f"{day_str}.{month_str}.{today.year}"
         await dry_message_editor(
-            text="Введите дату и время в формате DD.MM.YYYY HH:MM\nПример: 20.03.2023 09:45",
+            text=f"Введите дату и время в формате DD.MM.YYYY HH:MM\nПример: {hcode(today_str+now_str)}",
             keyboard=None,
             state=state,
             message=call.message
@@ -112,6 +123,7 @@ async def task_create_segregation(call: types.CallbackQuery, state: FSMContext, 
         )
         await call.answer(text=f"Задача №{task.pk} сформирована.", show_alert=True)
         await state.update_data({"task_pk": task.pk})
+        print("call moderate_task_menu")
         await moderate_task_menu(
             message=call.message,
             state=state,

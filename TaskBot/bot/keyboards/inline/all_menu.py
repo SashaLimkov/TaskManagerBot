@@ -178,7 +178,7 @@ async def get_created_tasks_list(callback_data: dict, telegram_id):
     for task in tasks:
         keyboard.add(
             await get_inline_button(
-                text=f"{task.pk}", cd=cd.task_moderation_list.new(
+                text=f"{task.pk} {task.task[:15]}...", cd=cd.task_moderation_list.new(
                     action=callback_data[ACTION],
                     action_2=callback_data[f"{ACTION}_2"],
                     task_pk=task.pk,
@@ -196,6 +196,7 @@ async def get_created_tasks_list(callback_data: dict, telegram_id):
 
 
 async def get_task_moderation_menu(callback_data: dict, task: int = 0):
+    task_pk = task or callback_data[cd.TASK]
     keyboard = await get_base_keyboard(
         keyboard_options={
             "row_width": 1,
@@ -206,7 +207,7 @@ async def get_task_moderation_menu(callback_data: dict, task: int = 0):
             text="Добавить/удалить исполнителей", cd=cd.task_moderation_menu.new(
                 action=callback_data[ACTION],
                 action_2=2,
-                task_pk=task or callback_data[cd.TASK],
+                task_pk=task_pk,
                 action_3=1
             )
         )
@@ -216,7 +217,7 @@ async def get_task_moderation_menu(callback_data: dict, task: int = 0):
             text="Список наблюдателей", cd=cd.task_moderation_menu.new(
                 action=callback_data[ACTION],
                 action_2=2,
-                task_pk=task or callback_data[cd.TASK],
+                task_pk=task_pk,
                 action_3=2
             )
         )
@@ -226,7 +227,7 @@ async def get_task_moderation_menu(callback_data: dict, task: int = 0):
             text="Просмотреть исполнителей", cd=cd.granted_obs_menu.new(
                 action=callback_data[ACTION],
                 action_2=callback_data[f"{ACTION}_2"],
-                task_pk=callback_data[TASK],
+                task_pk=task_pk,
                 action_3=1
             )
         )
@@ -236,7 +237,7 @@ async def get_task_moderation_menu(callback_data: dict, task: int = 0):
             text="Изменить задачу", cd=cd.task_moderation_menu.new(
                 action=callback_data[ACTION],
                 action_2=2,
-                task_pk=task or callback_data[cd.TASK],
+                task_pk=task_pk,
                 action_3=3
             )
         )
@@ -246,7 +247,7 @@ async def get_task_moderation_menu(callback_data: dict, task: int = 0):
             text="Закрыть задачу", cd=cd.task_moderation_menu.new(
                 action=callback_data[ACTION],
                 action_2=2,
-                task_pk=task or callback_data[cd.TASK],
+                task_pk=task_pk,
                 action_3=4
             )
         )
@@ -356,7 +357,7 @@ async def get_granted_tasks_list(callback_data: dict, telegram_id):
     for task in tasks:
         keyboard.add(
             await get_inline_button(
-                text=f"{task.task.pk} {'✅' if task.is_done else ''}", cd=cd.granted_task_list.new(
+                text=f"{task.task.pk} {task.task.task[:15]}... {'✅' if task.is_done else ''}", cd=cd.granted_task_list.new(
                     action=callback_data[ACTION],
                     action_2=callback_data[f"{ACTION}_2"],
                     task_pk=task.task.pk,

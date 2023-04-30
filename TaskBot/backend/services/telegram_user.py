@@ -23,4 +23,6 @@ def get_profile_by_pk(user_pk: int) -> TelegramUser:
 
 def get_profile_by_username(username: str) -> TelegramUser:
     """Возвращает Profile пользователя по telegram_id"""
-    return TelegramUser.objects.filter(username=username).first()
+    user_username = TelegramUser.objects.filter(username=username).first()
+    user_fio = TelegramUser.objects.filter(fio__contains=username).first()
+    return user_fio or user_username

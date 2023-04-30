@@ -53,3 +53,7 @@ async def update_deadline():
                 user.save()
                 task_user.save()
                 await bot.send_message(chat_id=executor.user.telegram_id, text=text)
+                await bot.send_message(
+                    text=f"{executor.user.fio} просрочил задание\n"+text,
+                    chat_id=task.creator.telegram_id
+                )

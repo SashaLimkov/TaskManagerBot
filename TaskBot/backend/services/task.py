@@ -17,6 +17,10 @@ def create_task(user: TelegramUser, task_description: str, deadline: str, file, 
                 file_name,
                 File(f))
             obj.save()
+        try:
+            os.remove(file)
+        except:
+            pass
     else:
         obj = Task(
             creator=user,

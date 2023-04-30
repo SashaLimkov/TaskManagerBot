@@ -22,6 +22,7 @@ from bot.states.TaskModeration import TaskModeration
 from bot.utils.date_time_worker import get_selected_datetime, is_past_date
 from bot.utils.message_worker import try_edit_document_caption, dry_message_editor, send_notify
 from bot.utils.validators import date_time_validator
+from aiogram.utils.markdown import hcode
 
 
 async def moderate_task_menu_call(call: types.CallbackQuery, state: FSMContext, callback_data: dict):
@@ -99,7 +100,9 @@ async def close_task(call: types.CallbackQuery, state: FSMContext):
 
 async def get_task_info(state: FSMContext = {}, callback_data: dict = {}):
     data = await state.get_data()
-    task_pk = callback_data.get("task_pk") or data.get("task_pk", False)
+    print(data)
+    task_pk = callback_data.get("task_pk", False) or data.get("task_pk", False)
+    print(task_pk)
     await state.update_data({"task_pk": task_pk})
     main_message_id = data.get("main_message_id")
     task = get_task_by_pk(task_pk=task_pk)
@@ -107,7 +110,7 @@ async def get_task_info(state: FSMContext = {}, callback_data: dict = {}):
     observers = task.executors.filter(role__name="Наблюдатель").all()
     text = td.TASK_MODERATION_MENU.format(
         task_pk=task_pk,
-        description=task.task,
+        description=hcode(task.task),
         creator_fio=task.creator.fio,
         task_deadline=task.datetime_deadline,
         creator_username=f"@{task.creator.username}",
@@ -188,7 +191,7 @@ async def get_obs_username(message: types.Message, state: FSMContext):
 
 async def enter_username(call: types.CallbackQuery, state: FSMContext):
     await dry_message_editor(
-        text="Введите юзернейм пользователя для добавления. Если нужно удалить пользователя, введите юзернейм повторно",
+        text="Введите юзернейм или ФИО пользователя для добавления . Если нужно удалить пользователя, введите юзернейм или ФИО повторно",
         keyboard=0,
         state=state,
         message=call.message
@@ -319,7 +322,7 @@ def pretty_task_info(task: models.Task):
     observers = task.executors.filter(role__name="Наблюдатель").all()
     text = td.TASK_INFO_MENU.format(
         task_pk=task.pk,
-        description=task.task,
+        description=hcode(task.task),
         creator_fio=task.creator.fio,
         task_deadline=task.datetime_deadline,
         creator_username=f"@{task.creator.username}",

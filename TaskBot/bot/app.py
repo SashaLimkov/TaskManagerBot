@@ -2,27 +2,24 @@ from aiogram import Dispatcher
 from aiogram.utils import executor
 
 from backend.tasks import notifier, update_deadline
-from .config.loader import dp
+from .config.loader import dp, scheduler
 from . import filters, handlers
 
 import os
 import django
 import asyncio
-import aioschedule
 
 
-async def scheduler():
-    aioschedule.every().day.at("09:00").do(notifier)
-    aioschedule.every(1).minute.do(update_deadline)
-    while True:
-        await aioschedule.run_pending()
-        await asyncio.sleep(1)
+def scheduler_func():
+    scheduler.add_job(update_deadline, "interval", minutes=10)
+    scheduler.add_job(notifier, "cron", day_of_week="mon-sun", hour=9)
 
 
 def run_bot():
     """Запускает процессы бота"""
     _setup_django()
     print("Bot started")
+    scheduler.start()
     executor.start_polling(
         dp, on_startup=_on_startup, on_shutdown=_on_shutdown, skip_updates=False
     )
@@ -31,8 +28,7 @@ def run_bot():
 async def _on_startup(dispatcher: Dispatcher):
     """Регистрирует ветки handlers"""
     handlers.setup(dispatcher)
-    asyncio.create_task(scheduler())
-
+    scheduler_func()
 
 
 async def _on_shutdown(dispatcher: Dispatcher):
