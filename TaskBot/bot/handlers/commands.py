@@ -2,7 +2,8 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from bot.data import text_data as td
 from bot.states.MainMenu import MainMenu
-from bot.utils.message_worker import try_edit_message
+from bot.utils.deleter import try_delete_message
+from bot.utils.message_worker import try_edit_message, try_send_message
 from bot.utils import deleter
 from bot.keyboards import inline as ik
 
@@ -29,11 +30,8 @@ async def start_command(message: types.Message, state: FSMContext):
     data = await state.get_data()
     main_message_id = data.get("main_message_id", False)
     text = td.MAIN_MENU
-    await try_edit_message(
-        message=message,
-        user_id=user_id,
-        text=text,
-        main_message_id=main_message_id,
-        state=state,
-        keyboard=await ik.get_main_menu()
+    await try_send_message(user_id, text, await ik.get_main_menu(), state)
+    await try_delete_message(
+        chat_id=user_id,
+        message_id=main_message_id,
     )

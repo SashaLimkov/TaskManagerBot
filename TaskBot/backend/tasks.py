@@ -11,7 +11,7 @@ async def notifier():
     tasks = Task.objects.filter(closed_task=False).all()
     for task in tasks:
         if datetime.date.today() >= task.datetime_deadline.date():
-            executors = task.executors.filter(is_done=False).all()
+            executors = task.executors.filter(is_done=False, role__name="Исполнитель").all()
             observers = task.executors.filter(role__name="Наблюдатель").all()
             text = td.TASK_INFO_MENU.format(
                 task_pk=task.pk,
@@ -26,12 +26,13 @@ async def notifier():
             )
             for executor in executors:
                 await bot.send_message(chat_id=executor.user.telegram_id, text=text)
+            await bot.send_message(chat_id=task.creator.telegram_id, text=text)
 
 
 async def update_deadline():
     tasks = Task.objects.filter(closed_task=False).all()
     for task in tasks:
-        executors = task.executors.filter(is_done=False, is_not_deadline_lost=True).all()
+        executors = task.executors.filter(is_done=False, is_not_deadline_lost=True, role__name="Исполнитель").all()
         if datetime.datetime.now().time() > task.datetime_deadline.time() and datetime.date.today() >= task.datetime_deadline.date():
             observers = task.executors.filter(role__name="Наблюдатель").all()
             text = "Дэдлайн просрочен.\n" + td.TASK_INFO_MENU.format(
